@@ -1,550 +1,233 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
-  <title>🏃🏿‍♂️Run.ai 📻Radio</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏃🏿‍♂️Run.ai 📻Radio</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      background: radial-gradient(circle at top, #0f0f0f, #000);
-      color: #0ff;
-      font-family: Arial;
-      padding: 20px;
-    }
+<style>
+body {
+  background: radial-gradient(circle at top, #0f0f0f, #000);
+  color: #0ff;
+  font-family: Arial;
+  padding: 20px;
+}
+h2 { text-align:center; text-shadow:0 0 10px #0ff; }
+#nowPlaying { text-align:center; margin:10px 0; color:#fff; }
 
-    h2 { text-align:center; text-shadow:0 0 10px #0ff; }
+canvas {
+  width:100%;
+  height:120px;
+  background:#000;
+  border-radius:10px;
+  margin:15px 0;
+  box-shadow:0 0 10px #0ff;
+}
 
-    #nowPlaying { text-align:center; margin:10px 0; color:#fff; }
+.controls { text-align:center; }
 
-    canvas {
-      width:100%;
-      height:120px;
-      background:#000;
-      border-radius:10px;
-      margin:15px 0;
-      box-shadow:0 0 10px #0ff;
-    }
+button {
+  padding:10px;
+  margin:5px;
+  background:#111;
+  color:#0ff;
+  border:none;
+  box-shadow:0 0 10px #0ff;
+  cursor:pointer;
+}
 
-    .controls { text-align:center; }
+button.active { background:#0ff; color:#000; }
 
-    button {
-      padding:10px;
-      margin:5px;
-      background:#111;
-      color:#0ff;
-      border:none;
-      box-shadow:0 0 10px #0ff;
-      cursor:pointer;
-    }
-
-    button.active { background:#0ff; color:#000; }
-
-    input[type=range] { width:100%; }
-
-    .station-row {
-  display: flex;
-  overflow-x: auto;
-  gap: 10px;
-  padding-bottom: 10px;
+.station-row {
+  display:flex;
+  overflow-x:auto;
+  gap:10px;
 }
 
 .track {
-  min-width: 180px;
-  flex: 0 0 auto;
-  padding: 10px;
-  background: #111;
-  border-radius: 8px;
-  cursor: pointer;
-  text-align: center;
-  box-shadow: 0 0 8px #0ff;
+  min-width:180px;
+  background:#111;
+  padding:10px;
+  border-radius:10px;
+  text-align:center;
+  box-shadow:0 0 10px #0ff;
 }
 
-.station-row::-webkit-scrollbar {
-  height: 6px;
+.equalizer {
+  display:flex;
+  justify-content:center;
+  gap:5px;
 }
 
-.station-row::-webkit-scrollbar-thumb {
-  background: #0ff;
-  border-radius: 10px;
+.bar {
+  width:5px;
+  height:10px;
+  background:#0ff;
+  animation:bounce 1s infinite;
+  animation-play-state:paused;
 }
 
-    .progress { height:5px; background:#222; margin-top:5px; }
-    .progress-bar { height:100%; width:0%; background:#0ff; }
+@keyframes bounce {50%{height:40px;}}
 
-    .equalizer {
-      display:flex;
-      justify-content:center;
-      height:40px;
-      gap:4px;
-    }
+/* 🛍️ PRODUCT CAROUSEL */
+.product-carousel {
+  display:flex;
+  overflow-x:auto;
+  gap:15px;
+}
 
-    .bar {
-      width:5px;
-      height:10px;
-      background:#0ff;
-      animation:bounce 1s infinite;
-      animation-play-state:paused;
-    }
-
-    @keyframes bounce { 50% { height:40px; } }
-
-    #paymentModal {
-      display:none;
-      position:fixed;
-      top:0; left:0;
-      width:100%; height:100%;
-      background:rgba(0,0,0,0.9);
-      justify-content:center;
-      align-items:center;
-      z-index:999;
-    }
-  </style>
+.product-card {
+  min-width:220px;
+  background:#111;
+  padding:15px;
+  border-radius:10px;
+  text-align:center;
+  box-shadow:0 0 15px #0ff;
+}
+.product-card img {
+  width:100%;
+  border-radius:10px;
+}
+</style>
 </head>
 
 <body>
 
 <h2>🏃🏿‍♂️Run.ai 📻Radio</h2>
-<div style="text-align:center; margin:15px 0;">
+
+<!-- 🎙 DJ CHAT -->
+<div style="text-align:center;">
   <h3>🏃🏿‍♂️Run.ai 🎙DJ Chat</h3>
-  <button onclick="window.open('https://chatgpt.com/gg/v/69edd27aec0881939b3622d930d54f13?token=zOLoIYdA4hjhAU7JxKal1g','_blank')">
+  <button onclick="window.open('https://chatgpt.com/gg/v/69edd27aec0881939b3622d930d54f13?token=zOLoIYdA4hjhAU7JxKal1g')">
     Open DJ Chat
   </button>
 </div>
 
-<div id="nowPlaying">🎧 Now Playing: None</div>
-
+<!-- 🔊 PLAYER -->
+<div id="nowPlaying">🎧 None</div>
 <canvas id="wave"></canvas>
 
 <div class="equalizer">
   <div class="bar"></div><div class="bar"></div>
   <div class="bar"></div><div class="bar"></div>
-  <div class="bar"></div>
 </div>
 
 <div class="controls">
   <button onclick="player.play()">▶</button>
   <button onclick="player.pause()">⏸</button>
-  <button onclick="nextTrack()">⏭</button>
-
-  <input type="range" id="seek">
-  <div id="time">0:00 / 0:00</div>
-
-  <button id="shuffleBtn" onclick="toggleShuffle()">🔀</button>
-  <button id="loopBtn" onclick="toggleLoop()">🔁</button>
 </div>
 
 <audio id="player"></audio>
 
-<!-- PAYMENT MODAL -->
-<div id="paymentModal">
-  <div style="background:#111;padding:20px;border-radius:10px;text-align:center;box-shadow:0 0 20px #0ff;max-width:300px;">
-    <h3>💰 Support Track</h3>
-
-    <img src="WA_1776604572672.jpeg" style="width:200px;border-radius:10px;" />
-
-    <div id="payDetails" style="font-size:12px;color:#aaa;margin-top:10px;"></div>
-
-    <input id="txHashInput" placeholder="Paste TX Hash" style="width:100%;margin-top:10px;" />
-
-    <button onclick="verifyPayment()">✅ Verify</button>
-    <button onclick="closeModal()">❌ Close</button>
-  </div>
+<!-- 💳 SUBSCRIPTION -->
+<div style="text-align:center;margin:20px 0;">
+  <h3>🤖 Subscriber</h3>
+  <h2>80 XLM / Month</h2>
+  <button onclick="subscribeUser()">Subscribe</button>
+  <div id="subStatus"></div>
 </div>
 
-<div style="text-align:center; margin:20px 0;">
-  <div style="background:#111;padding:20px;border-radius:12px;box-shadow:0 0 20px #0ff;max-width:320px;margin:auto;">
-    
-    <h3>🏃🏿‍♂️Run.ai 🤖 Subscriber</h3>
-
-    <img src="WA_1776604572672.jpeg" style="width:100%;border-radius:10px;margin:10px 0;" />
-
-    <h2 style="color:#0ff;">80.00 XLM / Month</h2>
-
-    <p style="font-size:13px;color:#aaa;">
-      🎧 1 Free Track Download Daily<br>
-      💰 Support Artists & Earn Rewards
-    </p>
-
-    <button onclick="subscribeUser()">💳 Subscribe</button>
-
-    <div id="subStatus" style="margin-top:10px;font-size:12px;color:#0f0;"></div>
-
-  </div>
+<!-- 🛍️ PRODUCT CAROUSEL -->
+<div>
+  <h3 style="text-align:center;">🛍️ Products</h3>
+  <div id="productCarousel" class="product-carousel"></div>
 </div>
- 
+
+<!-- 🎵 STATIONS -->
 <div id="stations"></div>
-<div id="stats" style="text-align:center; margin-top:10px;"></div>
 
-<div style="text-align:center; margin-top:10px;">
-  <button onclick="likeTrack()">❤️ Like</button>
-</div>
-
-<div style="text-align:center; margin-top:10px;">
-  <input id="commentInput" placeholder="Write comment..." style="width:60%">
-  <button onclick="addComment()">💬 Post</button>
-</div>
-
-<div id="comments" style="margin-top:10px;"></div>
-<script> 
- const API = "http://localhost:3000";
-const CPM = 2; 
-// ================= WALLET =================
-const WALLET = "0x60790faFA18390A53770184E6F8e53E0BC3Cf7D7";
-
-// ================= ELEMENTS =================
+<script>
 const player = document.getElementById("player");
-const seek = document.getElementById("seek");
-const timeDisplay = document.getElementById("time");
-const nowPlaying = document.getElementById("nowPlaying");
 const eqBars = document.querySelectorAll(".bar");
 
-// ================= WAVEFORM =================
-const canvas = document.getElementById("wave");
-const ctx = canvas.getContext("2d");
-
-function resizeCanvas(){
-  canvas.width = canvas.offsetWidth;
-  canvas.height = canvas.offsetHeight;
-}
-resizeCanvas();
-window.addEventListener("resize", resizeCanvas);
-
-let audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-let analyser = audioCtx.createAnalyser();
-analyser.fftSize = 2048;
-
-let source;
-let drawing=false;
-
-document.addEventListener("click", ()=>{
-  if(audioCtx.state==="suspended") audioCtx.resume();
-});
-
-function draw(){
-  requestAnimationFrame(draw);
-
-  const data = new Uint8Array(analyser.fftSize);
-  analyser.getByteTimeDomainData(data);
-
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  ctx.beginPath();
-  ctx.strokeStyle="#0ff";
-
-  let slice=canvas.width/data.length;
-  let x=0;
-
-  for(let i=0;i<data.length;i++){
-    let v=data[i]/128.0;
-    let y=(v*canvas.height)/2;
-
-    if(i===0) ctx.moveTo(x,y);
-    else ctx.lineTo(x,y);
-
-    x+=slice;
-  }
-
-  ctx.stroke();
-}
-
-player.addEventListener("play", ()=>{
-  if(!source){
-    source=audioCtx.createMediaElementSource(player);
-    source.connect(analyser);
-    analyser.connect(audioCtx.destination);
-  }
-
-  if(!drawing){
-    drawing=true;
-    draw();
-  }
-
-  eqBars.forEach(b=>b.style.animationPlayState="running");
-});
-
-player.addEventListener("pause", ()=>{
-  eqBars.forEach(b=>b.style.animationPlayState="paused");
-});
-
-// ================= TRACK NAMES =================
-const trackNames = {
-  "new1.mp3": "⚡️Light⚡️Speed🎵",
-  "new2.mp3": "Lit.It.Flow💰",
-  "new3.mp3": "🟥Ites's🟨Gold an🟩Green",
-  "new4.mp3": "The🧓🏾Grand-Children",
-  "new5.mp3": "⚒️Tools🔧",
-  "new6.mp3": "🍬Candy💈Shop🏬",
-  "new7.mp3": "💵Tokenomics💰In©️",
-  "new8.mp3": "📃Lien⤴️Up",
-  "new9.mp3": "⚡️Rise & 💥Shine",
-  "new10.mp3": "💰Groveman",
-   "trend1.mp3": "🧠Brain🤯Glitch",
-   "trend2.mp3": "🔑Tap In",
-   "trend3.mp3": "Mehsun That🇻🇮Gal Sweet",
-  "trend4.mp3": "💥 Ion Sharpen 💥Ion",
-  "trend5.mp3": "👤Shadow Upgrade",
-"trend6.mp3": "♟️Law 1",
-"trend7.mp3": "💭Truth📡",
-"trend8.mp3": "A🔉A🤖D♾️",
-"trend9.mp3": "✅️Good",
-"trend10.mp3": "🎼Riddim👨🏿‍🏫Teacher🔉",
-"lit1.mp3": "👁️Over👀Sight",
-"lit2.mp3": "🎡Ignite ✨",
-"lit3.mp3": "Let It 💥Shine",
-"lit4.mp3": "⚡️Frequency⚡️",
-"lit5.mp3": "🏧Kidodo💰Jazzy",
-"lit6.mp3": "🥊Jab🔫Drill",
-"lit7.mp3": "♿️Sitting On The Floor🆘️",
-"lit8.mp3": "🙏🏿Humble✅Ritght",
-"lit9.mp3": "🤖Blockchains Chucky",
-"lit10.mp3": "⚡️Plazma Light⚡️"};
-
-// ================= STATIONS =================
+/* 🎧 TRACKS */
 const stations = {
-  "New": Array.from({length:10},(_,i)=>{
-    const file=`new${i+1}.mp3`;
-    return {title:trackNames[file]||file,src:`music/${file}`};
-  }),
-  "Trending": Array.from({length:10},(_,i)=>{
-    const file=`trend${i+1}.mp3`;
-   return {title:trackNames[file]||file,src:`music/${file}`};
-
- }),
-  "Lit": Array.from({length:10},(_,i)=>{
-    const file=`lit${i+1}.mp3`;
-  return {title:trackNames[file]||file,src:`music/${file}`};
-    
-  })
+  "New":[
+    {title:"⚡️Light Speed",src:"music/new1.mp3"},
+    {title:"💰Flow",src:"music/new2.mp3"}
+  ]
 };
 
-let currentList=[],currentIndex=0,isShuffle=false,isLoop=false;
-let currentPurchase={};
+let currentList=[],currentIndex=0;
 
-// ================= RENDER =================
+/* ▶️ PLAY */
+function playTrack(station,i){
+  currentList=stations[station];
+  currentIndex=i;
+  player.src=currentList[i].src;
+  player.play();
+  nowPlaying.innerText=currentList[i].title;
+}
+
+/* 🔊 EQ */
+player.onplay=()=>eqBars.forEach(b=>b.style.animationPlayState="running");
+player.onpause=()=>eqBars.forEach(b=>b.style.animationPlayState="paused");
+
+/* 🎨 RENDER TRACKS */
 function renderStations(){
   const container=document.getElementById("stations");
   container.innerHTML="";
-
+  
   Object.keys(stations).forEach(name=>{
-    const section=document.createElement("div");
-
-    section.innerHTML=`<h3>📻 ${name}</h3>`;
-
-    // 🔥 horizontal row container
     const row=document.createElement("div");
     row.className="station-row";
-
+    
     stations[name].forEach((t,i)=>{
-      const safeId=t.src.replace(/[/.]/g,"_");
-
       const el=document.createElement("div");
       el.className="track";
-
-      el.innerHTML=`
-        <div>${t.title}</div>
-        <button onclick="event.stopPropagation(); openPayment('${t.title}','${t.src}')">💸</button>
-        <button id="dl-${safeId}" style="display:none;" onclick="downloadTrack('${t.src}')">⬇️</button>
-      `;
-
+      el.innerText=t.title;
       el.onclick=()=>playTrack(name,i);
       row.appendChild(el);
     });
-
-    section.appendChild(row);
-    container.appendChild(section);
+    
+    container.appendChild(row);
   });
 }
-// ================= PLAYER =================
-async function playTrack(station,i){
-  currentList=stations[station];
-  currentIndex=i;
-  const track=currentList[i];
 
-  player.src=track.src;
-  player.play();
-
-  nowPlaying.innerText=`🎧 ${station} • ${track.title}`;
-
-  // 🔥 SEND PLAY TO BACKEND
-  try{
-    const res = await fetch(API+"/play",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({track:track.src})
-    });
-
-    const data = await res.json();
-    updateStats(track.src,data);
-  }catch(e){
-    console.log("Backend not running");
-  }
-}
-
-function nextTrack(){
-  currentIndex=isShuffle
-    ? Math.floor(Math.random()*currentList.length)
-    : (currentIndex+1)%currentList.length;
-
-  const station=Object.keys(stations).find(n=>stations[n]===currentList);
-  playTrack(station,currentIndex);
-}
-
-function toggleShuffle(){
-  isShuffle=!isShuffle;
-  document.getElementById("shuffleBtn").classList.toggle("active");
-}
-
-function toggleLoop(){
-  isLoop=!isLoop;
-  document.getElementById("loopBtn").classList.toggle("active");
-}
-
-player.onended=()=> isLoop?player.play():nextTrack();
-
-// ================= SEEK =================
-player.ontimeupdate=()=>{
-  if(!player.duration) return;
-
-  seek.value=(player.currentTime/player.duration)*100;
-
-  const f=t=>Math.floor(t/60)+":"+("0"+Math.floor(t%60)).slice(-2);
-  timeDisplay.innerText=f(player.currentTime)+" / "+f(player.duration);
-};
-
-seek.oninput=()=>{
-  if(player.duration){
-    player.currentTime=(seek.value/100)*player.duration;
-  }
-};
-
-// ================= PAYMENT =================
-function openPayment(title,src){
-  currentPurchase={title,src};
-
-  document.getElementById("paymentModal").style.display="flex";
-  document.getElementById("payDetails").innerHTML=`
-    Send: 0.001 BNB<br><br>
-    Wallet:<br>${WALLET}<br><br>
-    Ref:<br>${title}
-  `;
-}
-
-function verifyPayment(){
-  const tx=document.getElementById("txHashInput").value.trim();
-  if(!tx) return alert("Enter TX hash");
-
-  unlockDownload(currentPurchase.src);
-  closeModal();
-  alert("✅ Payment Verified (Demo)");
-}
-
-function unlockDownload(src){
-  const id="dl-"+src.replace(/[/.]/g,"_");
-  const btn=document.getElementById(id);
-  if(btn) btn.style.display="inline-block";
-}
-
-function downloadTrack(src){
-  const a=document.createElement("a");
-  a.href=src;
-  a.download=src.split("/").pop();
-  a.click();
-}
-
-function closeModal(){
-  document.getElementById("paymentModal").style.display="none";
-}
-// ================= STATS =================
-function updateStats(track,data){
-  const earnings = (data.plays/1000) * CPM;
-
-  document.getElementById("stats").innerHTML = `
-    ▶️ ${data.plays} Plays |
-    ❤️ ${data.likes} Likes |
-    💰 $${earnings.toFixed(4)}
-  `;
-
-  renderComments(data.comments || []);
-}
-
-// ================= LIKE =================
-async function likeTrack(){
-  if(!currentList.length) return;
-
-  const track=currentList[currentIndex].src;
-
-  const res = await fetch(API+"/like",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({track})
-  });
-
-  const data = await res.json();
-  updateStats(track,data);
-}
-
-// ================= COMMENT =================
-async function addComment(){
-  const text=document.getElementById("commentInput").value;
-  if(!text) return;
-
-  const track=currentList[currentIndex].src;
-
-  const res = await fetch(API+"/comment",{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({track,text})
-  });
-
-  const data = await res.json();
-
-  document.getElementById("commentInput").value="";
-  renderComments(data.comments);
-}
-
-// ================= RENDER COMMENTS =================
-function renderComments(comments){
-  document.getElementById("comments").innerHTML =
-    comments.map(c=>`<div>💬 ${c}</div>`).join("");
-}
-// INIT
-renderStations();
-
- let isSubscribed = false;
-let lastDownloadDay = null;
+/* 💳 SUBSCRIPTION */
+let isSubscribed=false;
+let lastDownloadDay=null;
 
 function subscribeUser(){
-  alert("Send 80 XLM to wallet to activate (demo)");
-  
-  // simulate success
-  isSubscribed = true;
-  document.getElementById("subStatus").innerText = "✅ Subscription Active";
+  isSubscribed=true;
+  subStatus.innerText="✅ Active";
 }
 
-// limit: 1 free download per day
-function canDownloadToday(){
-  const today = new Date().toDateString();
-
+function canDownload(){
+  const today=new Date().toDateString();
   if(!isSubscribed) return false;
-
-  if(lastDownloadDay === today){
-    alert("❌ Daily limit reached");
-    return false;
-  }
-
-  lastDownloadDay = today;
+  if(lastDownloadDay===today) return false;
+  lastDownloadDay=today;
   return true;
 }
 
-// MODIFY your downloadTrack function
-function downloadTrack(src){
-  if(!canDownloadToday()) return;
+/* 🛍️ PRODUCTS */
+const products=[
+  {name:"🎧 Headphones",price:"$49",img:"WA_1776604572672.jpeg"},
+  {name:"👕 T-Shirt",price:"$25",img:"WA_1776604572672.jpeg"}
+];
 
-  const a=document.createElement("a");
-  a.href=src;
-  a.download=src.split("/").pop();
-  a.click();
+function renderProducts(){
+  const container=document.getElementById("productCarousel");
+  products.forEach(p=>{
+    const card=document.createElement("div");
+    card.className="product-card";
+    card.innerHTML=`
+      <img src="${p.img}">
+      <h4>${p.name}</h4>
+      <p>${p.price}</p>
+      <button onclick="buyProduct('${p.name}')">Buy</button>
+    `;
+    container.appendChild(card);
+  });
 }
+
+function buyProduct(name){
+  alert("Buying "+name);
+}
+
+/* INIT */
+renderStations();
+renderProducts();
 </script>
 
 </body>
