@@ -116,10 +116,14 @@ h1{
   <canvas id="visualizer"></canvas>
 
   <!-- CONTROLS -->
-  <div class="controls">
-    <button onclick="audio.play()">▶</button>
-    <button onclick="audio.pause()">⏸</button>
-  </div>
+<div class="controls">
+  <button onclick="prevTrack()">⏮</button>
+  <button onclick="audio.play()">▶</button>
+  <button onclick="audio.pause()">⏸</button>
+  <button onclick="nextTrack()">⏭</button>
+  <button onclick="toggleShuffle()" id="shuffleBtn">🔀</button>
+  <button onclick="toggleLoop()" id="loopBtn">🔁</button>
+</div>
 
   <!-- PROGRESS -->
   <input type="range" id="progress" value="0" style="width:100%;">
@@ -128,7 +132,7 @@ h1{
 </div>
 
 <audio id="audio" src="music/new1.mp3"></audio>
-
+<div id="playlist" style="margin-top:15px;"></div>
 <!-- FEATURES -->
 <div class="features">
   <div class="box">📡 LIVE</div>
@@ -237,6 +241,95 @@ function draw(){
   ctx.stroke();
 }
 </script>
+ // 🎵 PLAYLIST
+const tracks = [
+  "music/new1.mp3",
+  "music/new2.mp3",
+  "music/new3.mp3"
+];
 
+let currentIndex = 0;
+let isShuffle = false;
+let isLoop = false;
+
+// LOAD TRACK
+function loadTrack(i){
+  currentIndex = i;
+  audio.src = tracks[i];
+  audio.play();
+  highlightTrack();
+}
+
+// NEXT / PREV
+function nextTrack(){
+  if(isShuffle){
+    currentIndex = Math.floor(Math.random() * tracks.length);
+  } else {
+    currentIndex = (currentIndex + 1) % tracks.length;
+  }
+  loadTrack(currentIndex);
+}
+
+function prevTrack(){
+  currentIndex = (currentIndex - 1 + tracks.length) % tracks.length;
+  loadTrack(currentIndex);
+}
+
+// LOOP
+function toggleLoop(){
+  isLoop = !isLoop;
+  document.getElementById("loopBtn").style.background = isLoop ? "#0ff" : "#111";
+}
+
+// SHUFFLE
+function toggleShuffle(){
+  isShuffle = !isShuffle;
+  document.getElementById("shuffleBtn").style.background = isShuffle ? "#0ff" : "#111";
+}
+
+// AUTO NEXT
+audio.onended = () => {
+  if(isLoop){
+    audio.play();
+  } else {
+    nextTrack();
+  }
+};
+
+// 🎧 RENDER PLAYLIST UI
+function renderPlaylist(){
+  const container = document.getElementById("playlist");
+  container.innerHTML = "";
+
+  tracks.forEach((t,i)=>{
+    const el = document.createElement("div");
+    el.style.padding="8px";
+    el.style.margin="5px";
+    el.style.background="#111";
+    el.style.borderRadius="8px";
+    el.style.cursor="pointer";
+    el.innerText = "🎵 Track " + (i+1);
+
+    el.onclick = ()=>loadTrack(i);
+    el.id = "track-"+i;
+
+    container.appendChild(el);
+  });
+}
+
+function highlightTrack(){
+  tracks.forEach((_,i)=>{
+    const el = document.getElementById("track-"+i);
+    if(el){
+      el.style.background = i === currentIndex ? "#0ff" : "#111";
+      el.style.color = i === currentIndex ? "#000" : "#0ff";
+    }
+  });
+}
+
+// INIT
+renderPlaylist();
+loadTrack(0);
+  
 </body>
   </html>
