@@ -73,6 +73,16 @@ h1{
   box-shadow:0 0 20px #0ff;
   width:280px;
 }
+.pay-btn{
+  display:block;
+  margin-top:10px;
+  padding:10px;
+  background:#0ff;
+  color:#000;
+  text-decoration:none;
+  border-radius:8px;
+  font-weight:bold;
+}
 </style>
 </head>
 
@@ -84,8 +94,7 @@ h1{
 <div class="player">
   <img src="IMG-20260511-WA0001.jpg" class="cover">
 
-  <!-- ✅ DYNAMIC TRACK NAME -->
-  <h3 id="trackName"> A.I. Sound Clash </h3>
+  <h3 id="trackName">A.I. Sound Clash</h3>
 
   <canvas id="visualizer"></canvas>
 
@@ -109,11 +118,17 @@ h1{
 <div id="paymentModal" class="modal">
   <div class="modal-box">
     <h3>💰 Support Artist</h3>
+
     <p style="font-size:12px;">
       Send <b>11.50 XLM (BSC)</b><br><br>
       Wallet:<br>
       <b>0x60790faFA18390A53770184E6F8e53E0BC3Cf7D7</b>
     </p>
+
+    <!-- ✅ PAYPAL BUTTON -->
+    <a href="https://www.paypal.com/ncp/payment/WY64G3Z528LPS" target="_blank" class="pay-btn">
+      💳 Pay with PayPal
+    </a>
 
     <input id="txHash" placeholder="Paste TX Hash" style="width:100%;margin-top:10px;">
     <button onclick="verifyPayment()">✅ Verify</button>
@@ -127,18 +142,14 @@ const progress = document.getElementById("progress");
 const timeDisplay = document.getElementById("time");
 const trackNameEl = document.getElementById("trackName");
 
-/* ✅ TRACK VARIABLES */
+/* TRACK DATA */
 let currentTrack = {
-  title: "Man Money 💰 vs. NOAI Yo AI Traps, Battle O.01",
+  title: "Man Money 💰 vs. NOAI Yo AI Traps",
   artist: "RUN.AI vs. NOAI",
   file: "music/Aivsnoai.mp3"
 };
 
-/* ✅ SET TRACK NAME */
-function updateTrackUI(){
-  trackNameEl.innerText = currentTrack.title + " • " + currentTrack.artist;
-}
-updateTrackUI();
+trackNameEl.innerText = currentTrack.title + " • " + currentTrack.artist;
 
 /* AUTOPLAY */
 document.addEventListener("click", () => {
@@ -183,17 +194,16 @@ audio.onended = () => {
 
 /* PAYMENT */
 function openPayment(){
-  document.getElementById("paymentModal").style.display="flex";
+  paymentModal.style.display="flex";
 }
 function closeModal(){
-  document.getElementById("paymentModal").style.display="none";
+  paymentModal.style.display="none";
 }
 
-async function verifyPayment(){
+function verifyPayment(){
   const hash = document.getElementById("txHash").value.trim();
   if(!hash) return alert("Enter TX hash");
 
-  // DEMO VALIDATION
   if(hash.length > 10){
     unlockDownload();
     closeModal();
@@ -207,7 +217,7 @@ function unlockDownload(){
   document.getElementById("downloadBtn").style.display="inline-block";
 }
 
-/* ✅ SMART DOWNLOAD NAME */
+/* DOWNLOAD */
 function downloadTrack(){
   const a=document.createElement("a");
   a.href=audio.src;
