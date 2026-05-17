@@ -83,6 +83,245 @@ h1{
 
 <div class="player">
   <img src="IMG-20260511-WA0001.jpg" class="cover">
+
+  <!-- ✅ DYNAMIC TRACK NAME -->
+  <h3 id="trackName">Loading...</h3>
+
+  <canvas id="visualizer"></canvas>
+
+  <div class="controls">
+    <button onclick="audio.play()">▶</button>
+    <button onclick="audio.pause()">⏸</button>
+    <button onclick="toggleShuffle()" id="shuffleBtn">🔀</button>
+    <button onclick="toggleLoop()" id="loopBtn">🔁</button>
+  </div>
+
+  <button onclick="openPayment()">💸 Support & Download</button>
+  <button id="downloadBtn" style="display:none;" onclick="downloadTrack()">⬇️ Download</button>
+
+  <input type="range" id="progress" value="0" style="width:100%;">
+  <div id="time" style="font-size:12px;color:#aaa;">0:00 / 0:00</div>
+</div>
+
+<audio id="audio" src="music/recording5.mp3"></audio>
+
+<!-- PAYMENT MODAL -->
+<div id="paymentModal" class="modal">
+  <div class="modal-box">
+    <h3>💰 Support Artist</h3>
+    <p style="font-size:12px;">
+      Send <b>11.50 XLM (BSC)</b><br><br>
+      Wallet:<br>
+      <b>0x60790faFA18390A53770184E6F8e53E0BC3Cf7D7</b>
+    </p>
+
+    <input id="txHash" placeholder="Paste TX Hash" style="width:100%;margin-top:10px;">
+    <button onclick="verifyPayment()">✅ Verify</button>
+    <button onclick="closeModal()">❌ Close</button>
+  </div>
+</div>
+
+<script>
+const audio = document.getElementById("audio");
+const progress = document.getElementById("progress");
+const timeDisplay = document.getElementById("time");
+const trackNameEl = document.getElementById("Man Money");
+
+/* ✅ TRACK VARIABLES */
+let currentTrack = {
+  title: "Man Money",
+  artist: "RUN.AI",
+  file: "music/recording5.mp3"
+};
+
+/* ✅ SET TRACK NAME */
+function updateTrackUI(){
+  trackNameEl.innerText = currentTrack.title + " • " + currentTrack.artist;
+}
+updateTrackUI();
+
+/* AUTOPLAY */
+document.addEventListener("click", () => {
+  audio.play().catch(()=>{});
+}, { once:true });
+
+/* PROGRESS */
+audio.ontimeupdate = () => {
+  if(!audio.duration) return;
+  progress.value = (audio.currentTime / audio.duration) * 100;
+  const f = t => Math.floor(t/60)+":" + ("0"+Math.floor(t%60)).slice(-2);
+  timeDisplay.innerText = f(audio.currentTime) + " / " + f(audio.duration);
+};
+
+progress.oninput = () => {
+  if(audio.duration){
+    audio.currentTime = (progress.value / 100) * audio.duration;
+  }
+};
+
+/* LOOP + SHUFFLE */
+let isShuffle=false, isLoop=false;
+
+function toggleLoop(){
+  isLoop=!isLoop;
+  loopBtn.classList.toggle("active");
+}
+function toggleShuffle(){
+  isShuffle=!isShuffle;
+  shuffleBtn.classList.toggle("active");
+}
+
+audio.onended = () => {
+  if(isLoop){
+    audio.currentTime = 0;
+    audio.play();
+  } else if(isShuffle){
+    audio.currentTime = Math.random() * audio.duration;
+    audio.play();
+  }
+};
+
+/* PAYMENT */
+function openPayment(){
+  document.getElementById("paymentModal").style.display="flex";
+}
+function closeModal(){
+  document.getElementById("paymentModal").style.display="none";
+}
+
+async function verifyPayment(){
+  const hash = document.getElementById("txHash").value.trim();
+  if(!hash) return alert("Enter TX hash");
+
+  // DEMO VALIDATION
+  if(hash.length > 10){
+    unlockDownload();
+    closeModal();
+    alert("✅ Payment Verified");
+  } else {
+    alert("❌ Invalid TX");
+  }
+}
+
+function unlockDownload(){
+  document.getElementById("downloadBtn").style.display="inline-block";
+}
+
+/* ✅ SMART DOWNLOAD NAME */
+function downloadTrack(){
+  const a=document.createElement("a");
+  a.href=audio.src;
+  a.download = currentTrack.title.replace(/\s+/g,"_") + ".mp3";
+  a.click();
+}
+
+/* VISUALIZER */
+const canvas = document.getElementById("visualizer");
+const ctx = canvas.getContext("2d");
+
+function resize(){
+  canvas.width = canvas.offsetWidth;
+  canvas.height = 80;
+}
+resize();
+window.addEventListener("resize", resize);
+
+let audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+let analyser = audioCtx.createAnalyser();
+analyser.fftSize = 2048;
+
+let source, running=false;
+
+document.addEventListener("click", ()=>{
+  if(audioCtx.state==="suspended") audioCtx.resume();
+});
+
+audio.onplay = ()=>{
+  if(!source){
+    source = audioCtx.createMediaElementSource(audio);
+    source.connect(analyser);
+    analyser.connect(audioCtx.destination);
+  }
+  if(!running){
+    running=true;
+    draw();
+  }
+};
+
+function draw(){
+  requestAnimationFrame(draw);
+
+  const buffer = new Uint8Array(analyser.fftSize);
+  analyser.getByteTimeDomainData(buffer);
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.beginPath();
+  ctx.strokeStyle="#0ff";
+
+  let slice = canvas.width / buffer.length;
+  let x = 0;
+
+  for(let i=0;i<buffer.length;i++){
+    let v = buffer[i] / 128.0;
+    let y = (v * canvas.height) / 2;
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+    x += slice;
+  }
+
+  ctx.stroke();
+}
+</script>
+
+</body>
+</html>.cover{
+  width:100%;
+  border-radius:15px;
+  box-shadow:0 0 15px #0ff;
+}
+.controls button{
+  background:#111;
+  color:#0ff;
+  border:none;
+  padding:10px;
+  margin:5px;
+  border-radius:50%;
+  box-shadow:0 0 10px #0ff;
+}
+.active{
+  background:#0ff !important;
+  color:#000 !important;
+}
+#visualizer{
+  width:100%;
+  height:80px;
+  margin-top:10px;
+}
+.modal{
+  display:none;
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.9);
+  justify-content:center;
+  align-items:center;
+}
+.modal-box{
+  background:#111;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 0 20px #0ff;
+  width:280px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🏃🏿‍♂️RUN.🤖AI 📻Radio</h1>
+<div>Stream. Earn. Vibez.</div>
+
+<div class="player">
+  <img src="IMG-20260511-WA0001.jpg" class="cover">
   <h3>Future Vibez</h3>
 
   <canvas id="visualizer"></canvas>
